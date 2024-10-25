@@ -1,24 +1,27 @@
 import React, { createContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// UserContext oluşturuyoruz
 export const UserContext = createContext({});
 
-// Context sağlayıcı bileşeni
 export function UserContextProvider({ children }) {
   const [userInfo, setUserInfo] = useState(null);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
   
-  // Kullanıcı bilgilerini çekmek için useEffect kullanıyoruz
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
+        const token = await AsyncStorage.getItem('token');
         const response = await fetch('https://fiyasko-blog-api.vercel.app/profile', {
           credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
         });
         if (response.ok) {
           const data = await response.json();
           setUserInfo(data);
         } else {
-          console.error('Kullanıcı bilgisi alınamadı.');
+          return null;
         }
       } catch (error) {
         console.error('Bir hata oluştu:', error);
@@ -28,8 +31,12 @@ export function UserContextProvider({ children }) {
     fetchUserInfo();
   }, []);
 
+  const toggleTheme = () => {
+    setIsDarkTheme((prevTheme) => !prevTheme);
+  };
+
   return (
-    <UserContext.Provider value={{ userInfo, setUserInfo }}>
+    <UserContext.Provider value={{ userInfo, setUserInfo, isDarkTheme, toggleTheme }}>
       {children}
     </UserContext.Provider>
   );

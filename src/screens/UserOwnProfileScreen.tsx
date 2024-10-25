@@ -5,16 +5,12 @@ import { useRoute } from '@react-navigation/native';
 
 export default function UserOwnProfileScreen() {
   const route = useRoute();
-  const { userInfo, setUserInfo } = useContext(UserContext);
+  const { userInfo, setUserInfo, isDarkTheme } = useContext(UserContext);
   const { username } = userInfo;
   const [userProfile, setUserProfile] = useState(null);
   const [bio, setBio] = useState('');
   const [editableBio, setEditableBio] = useState(false);
   const [likedPosts, setLikedPosts] = useState([]);
-
-  useEffect(() => {
-    console.log("Alınan parametreler:", route.params);
-  }, [route.params]);
 
   useEffect(() => {
     fetch(`https://fiyasko-blog-api.vercel.app/profile/${username}`)
@@ -46,7 +42,7 @@ export default function UserOwnProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, isDarkTheme ? styles.darkBackground : styles.lightBackground]}>
       <View style={styles.profileHeader}>
         <Image source={{ uri: userProfile.user.profilePhoto }} style={styles.profilePhoto} />
         <View style={{ marginLeft: 20, textAlign: 'center',}}>
@@ -66,7 +62,7 @@ export default function UserOwnProfileScreen() {
 
       {/* Biyografi */}
       <View style={styles.bioArea}>
-        <Text style={styles.bioTitle}>Biyografi</Text>
+        <Text style={[styles.bioTitle, isDarkTheme ? null : styles.lightText]}>Biyografi</Text>
 
         {editableBio ? (
           <TextInput
@@ -82,14 +78,14 @@ export default function UserOwnProfileScreen() {
 
       {/* Kullanıcının Paylaşımları */}
       <View>
-        <Text style={styles.sectionTitle}>{userProfile.user.username}'in Gönderileri:</Text>
+        <Text style={[styles.sectionTitle, isDarkTheme ? null : styles.lightText]}>{userProfile.user.username}'in Gönderileri:</Text>
         {userProfile.posts.length === 0 ? (
-          <Text style={styles.noPostsText}>Bu kullanıcının henüz paylaşımı yok.</Text>
+          <Text style={[styles.noPostsText, isDarkTheme ? null : styles.lightText]}>Bu kullanıcının henüz paylaşımı yok.</Text>
         ) : (
           userProfile.posts.map(post => (
             <View key={post._id} style={styles.postCard}>
               <Image source={{ uri: post.cover }} style={styles.postImage} />
-              <Text style={styles.postTitle}>{post.title}</Text>
+              <Text style={[styles.postTitle, isDarkTheme ? null : styles.lightText]}>{post.title}</Text>
             </View>
           ))
         )}
@@ -97,26 +93,37 @@ export default function UserOwnProfileScreen() {
 
       {/* Beğenilen Gönderiler */}
       <View>
-        <Text style={styles.sectionTitle}>{userProfile.user.username}'in Beğendiği Gönderiler:</Text>
+        <Text style={[styles.sectionTitle, isDarkTheme ? null : styles.lightText]}>{userProfile.user.username}'in Beğendiği Gönderiler:</Text>
         {likedPosts.length === 0 ? (
-          <Text style={styles.noPostsText}>Henüz beğenilen bir gönderi yok.</Text>
+          <Text style={[styles.noPostsText, isDarkTheme ? null : styles.lightText]}>Henüz beğenilen bir gönderi yok.</Text>
         ) : (
           likedPosts.map(post => (
             <View key={post._id} style={styles.postCard}>
               <Image source={{ uri: post.cover }} style={styles.postImage} />
-              <Text style={styles.postTitle}>{post.title}</Text>
+              <Text style={[styles.postTitle, isDarkTheme ? null : styles.lightText]}>{post.title}</Text>
             </View>
           ))
         )}
       </View>
+      <View style={{paddingVertical:40}}></View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  darkBackground: {
+  backgroundColor: '#181a1e',
+  },
+  lightBackground: {
+    backgroundColor: '#f5f5f5',
+  },
+  lightText: {
+    color: '#000',
+  },
   container: {
     backgroundColor: '#181a1e',
     padding: 16,
+    paddingTop: 40,
   },
   profileHeader: {
     backgroundColor: '#222',

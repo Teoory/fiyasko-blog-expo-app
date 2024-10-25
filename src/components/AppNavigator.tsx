@@ -9,9 +9,7 @@ import UserProfile from '../screens/UserProfileScreen';
 import UserOwnProfileScreen from '../screens/UserOwnProfileScreen';
 import SearchScreen from '../screens/SearchScreen';
 import AuthScreen from '../screens/AuthScreen';
-
-import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterPage';
+import SettingsScreen from '../screens/SettingsScreen';
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { UserContext } from '../Hooks/UserContext';
@@ -21,11 +19,12 @@ const Stack = createStackNavigator();
 const Tab = createMaterialBottomTabNavigator();
 
 function HomeStackNavigator() {
+  const { isDarkTheme } = useContext(UserContext);
   return (
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#333',
+          backgroundColor: `${isDarkTheme ? '#333' : '#ddd'}`,
         },
         headerTintColor: '#fff',
         headerTitleAlign: 'center',
@@ -69,7 +68,7 @@ function HomeStackNavigator() {
           ),
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.backButton}>←</Text>
+              <Text style={[styles.backButton, isDarkTheme ? null : styles.lightText]}>←</Text>
             </TouchableOpacity>
           ),
           headerRight: () => (
@@ -97,7 +96,7 @@ function HomeStackNavigator() {
           ),
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.backButton}>←</Text>
+              <Text style={[styles.backButton, isDarkTheme ? null : styles.lightText]}>←</Text>
             </TouchableOpacity>
           ),
           headerRight: () => (
@@ -113,7 +112,7 @@ function HomeStackNavigator() {
 
 
 function BottomTabNavigator() {
-  const { userInfo } = useContext(UserContext); 
+  const { userInfo, isDarkTheme } = useContext(UserContext); 
   return (
     <Tab.Navigator
       initialRouteName="Anasayfa"
@@ -121,9 +120,9 @@ function BottomTabNavigator() {
       labeled={true}
       sceneAnimationEnabled={false}
       activeColor="#518eff"
-      inactiveColor="#ccc"
+      inactiveColor={isDarkTheme ? '#ccc' : '#555'}
       activeIndicatorStyle={{ backgroundColor: 'transparent'}}
-      barStyle={{ backgroundColor: '#333', borderTopWidth: 0.5, borderTopColor: '#333', elevation: 0, shadowOpacity: 0}}
+      barStyle={{ backgroundColor: `${isDarkTheme ? '#333' : '#ddd'}`,borderColor:'#555', borderTopWidth: 0.5, borderTopColor: '#333', elevation: 0, shadowOpacity: 0}}
     >
       <Tab.Screen 
         name="Anasayfa" 
@@ -146,6 +145,17 @@ function BottomTabNavigator() {
           ),
         }}
       />
+
+        <Tab.Screen 
+          name="Ayarlar" 
+          component={SettingsScreen}
+          options={{
+            tabBarLabel: 'Ayarlar',
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="cog" color={color} size={24} />
+            ),
+          }}
+        />
 
       {userInfo && userInfo.username ? (
         <Tab.Screen 
@@ -207,6 +217,15 @@ export default function AppNavigator() {
 
 
 const styles = StyleSheet.create({
+  darkBackground: {
+    backgroundColor: '#181a1e',
+  },
+  lightBackground: {
+    backgroundColor: '#f5f5f5',
+  },
+  lightText: {
+    color: '#000',
+  },
   notificationButton: {
     color: '#fff', 
     fontSize: 16, 

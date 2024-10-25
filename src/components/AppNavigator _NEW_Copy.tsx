@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
@@ -6,9 +6,16 @@ import { Keyboard, Image, TouchableOpacity, Text, StyleSheet } from 'react-nativ
 import HomeScreen from '../screens/HomeScreen';
 import PostDetail from '../screens/PostDetail';
 import UserProfile from '../screens/UserProfileScreen';
+import UserOwnProfileScreen from '../screens/UserOwnProfileScreen';
 import SearchScreen from '../screens/SearchScreen';
+import AuthScreen from '../screens/AuthScreen';
+
 import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterPage';
+
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { UserContext } from '../Hooks/UserContext';
+import { tr } from 'date-fns/locale';
 
 const Stack = createStackNavigator();
 const Tab = createMaterialBottomTabNavigator();
@@ -104,13 +111,19 @@ function HomeStackNavigator() {
   );
 }
 
+
 function BottomTabNavigator() {
+  const { userInfo } = useContext(UserContext); 
   return (
     <Tab.Navigator
       initialRouteName="Anasayfa"
-      activeColor="#fff"
+      shifting={false}
+      labeled={true}
+      sceneAnimationEnabled={false}
+      activeColor="#518eff"
       inactiveColor="#ccc"
-      barStyle={{ backgroundColor: '#333' }}
+      activeIndicatorStyle={{ backgroundColor: 'transparent'}}
+      barStyle={{ backgroundColor: '#333', borderTopWidth: 0.5, borderTopColor: '#333', elevation: 0, shadowOpacity: 0}}
     >
       <Tab.Screen 
         name="Anasayfa" 
@@ -134,16 +147,38 @@ function BottomTabNavigator() {
         }}
       />
 
-      <Tab.Screen 
-        name="Giriş Yap" 
-        component={LoginScreen}
-        options={{
-          tabBarLabel: 'Giriş Yap',
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="login" color={color} size={24} />
-          ),
-        }}
-      />
+      {userInfo && userInfo.username ? (
+        <Tab.Screen 
+          name="UserProfile" 
+          component={UserOwnProfileScreen}
+          options={{
+            tabBarLabel: userInfo.username,
+            tabBarIcon: ({ color }) => (
+              <TouchableOpacity>
+                {userInfo.profilePhoto ? (
+                  <Image 
+                    source={{ uri: userInfo.profilePhoto }}
+                    style={{ width: 24, height: 24, borderRadius: 12 }}
+                  />
+                ) : (
+                  <MaterialCommunityIcons name="account" color={color} size={24} />
+                )}
+              </TouchableOpacity>
+            ),
+          }}
+        />
+      ) : (
+        <Tab.Screen 
+          name="Giris-yap" 
+          component={AuthScreen}
+          options={{
+            tabBarLabel: 'Giriş Yap',
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="login" color={color} size={24} />
+            ),
+          }}
+        />
+      )}
     </Tab.Navigator>
   );
 }
@@ -164,6 +199,7 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
+      {/* <HomeStackNavigator /> */}
       <BottomTabNavigator />
     </NavigationContainer>
   );

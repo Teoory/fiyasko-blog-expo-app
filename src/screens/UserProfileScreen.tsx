@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { UserContext } from '../Hooks/UserContext';  // Kendi user context'inize göre düzenleyin
-import { useRoute } from '@react-navigation/native';  // useParams yerine kullanılıyor
+import { UserContext } from '../Hooks/UserContext';
+import { useRoute } from '@react-navigation/native';
 
 export default function UserProfileScreen() {
   const route = useRoute();
@@ -10,14 +10,13 @@ export default function UserProfileScreen() {
   const [bio, setBio] = useState('');
   const [editableBio, setEditableBio] = useState(false);
   const [likedPosts, setLikedPosts] = useState([]);
-  const { userInfo, setUserInfo } = useContext(UserContext);  // Kullanıcı bilgileri
+  const { userInfo, setUserInfo, isDarkTheme } = useContext(UserContext);
+
+  // useEffect(() => {
+  //   console.log("Alınan parametreler:", route.params);
+  // }, [route.params]);
 
   useEffect(() => {
-    console.log("Alınan parametreler:", route.params);
-  }, [route.params]);
-
-  useEffect(() => {
-    // Kullanıcı profili verilerini getir
     fetch(`https://fiyasko-blog-api.vercel.app/profile/${username}`)
       .then(response => response.json()) 
       .then(data => {
@@ -28,14 +27,12 @@ export default function UserProfileScreen() {
 
 
   useEffect(() => {
-    // Kullanıcı bilgileri alınıyor
     fetch('https://fiyasko-blog-api.vercel.app/profile', { credentials: 'include' })
       .then(response => response.json())
       .then(userInfo => {
         setUserInfo(userInfo);
       });
     
-    // Beğenilen gönderiler
     fetch(`https://fiyasko-blog-api.vercel.app/profile/${username}/likedPosts`)
       .then(response => response.json())
       .then(data => {
@@ -49,7 +46,7 @@ export default function UserProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, isDarkTheme ? styles.darkBackground : styles.lightBackground]}>
       <View style={styles.profileHeader}>
         <Image source={{ uri: userProfile.user.profilePhoto }} style={styles.profilePhoto} />
         <View style={{ marginLeft: 20, textAlign: 'center',}}>
@@ -69,7 +66,7 @@ export default function UserProfileScreen() {
 
       {/* Biyografi */}
       <View style={styles.bioArea}>
-        <Text style={styles.bioTitle}>Biyografi</Text>
+        <Text style={[styles.bioTitle, isDarkTheme ? null : styles.lightText]}>Biyografi</Text>
 
         {editableBio ? (
           <TextInput
@@ -85,14 +82,14 @@ export default function UserProfileScreen() {
 
       {/* Kullanıcının Paylaşımları */}
       <View>
-        <Text style={styles.sectionTitle}>{userProfile.user.username}'in Gönderileri:</Text>
+        <Text style={[styles.sectionTitle, isDarkTheme ? null : styles.lightText]}>{userProfile.user.username}'in Gönderileri:</Text>
         {userProfile.posts.length === 0 ? (
-          <Text style={styles.noPostsText}>Bu kullanıcının henüz paylaşımı yok.</Text>
+          <Text style={[styles.noPostsText, isDarkTheme ? null : styles.lightText]}>Bu kullanıcının henüz paylaşımı yok.</Text>
         ) : (
           userProfile.posts.map(post => (
             <View key={post._id} style={styles.postCard}>
               <Image source={{ uri: post.cover }} style={styles.postImage} />
-              <Text style={styles.postTitle}>{post.title}</Text>
+              <Text style={[styles.postTitle, isDarkTheme ? null : styles.lightText]}>{post.title}</Text>
             </View>
           ))
         )}
@@ -100,23 +97,33 @@ export default function UserProfileScreen() {
 
       {/* Beğenilen Gönderiler */}
       <View>
-        <Text style={styles.sectionTitle}>{userProfile.user.username}'in Beğendiği Gönderiler:</Text>
+        <Text style={[styles.sectionTitle, isDarkTheme ? null : styles.lightText]}>{userProfile.user.username}'in Beğendiği Gönderiler:</Text>
         {likedPosts.length === 0 ? (
-          <Text style={styles.noPostsText}>Henüz beğenilen bir gönderi yok.</Text>
+          <Text style={[styles.noPostsText, isDarkTheme ? null : styles.lightText]}>Henüz beğenilen bir gönderi yok.</Text>
         ) : (
           likedPosts.map(post => (
             <View key={post._id} style={styles.postCard}>
               <Image source={{ uri: post.cover }} style={styles.postImage} />
-              <Text style={styles.postTitle}>{post.title}</Text>
+              <Text style={[styles.postTitle, isDarkTheme ? null : styles.lightText]}>{post.title}</Text>
             </View>
           ))
         )}
       </View>
+      <View style={{paddingVertical:20}}></View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  darkBackground: {
+    backgroundColor: '#181a1e',
+  },
+  lightBackground: {
+    backgroundColor: '#f5f5f5',
+  },
+  lightText: {
+    color: '#000',
+  },
   container: {
     backgroundColor: '#181a1e',
     padding: 16,

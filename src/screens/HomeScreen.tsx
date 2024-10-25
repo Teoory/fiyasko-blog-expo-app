@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, Image, Animated, TouchableOpacity, ScrollView } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
+import { UserContext } from '../Hooks/UserContext';
 import { useNavigation } from '@react-navigation/native';
 import { format } from 'date-fns';
 import { tr, eu } from 'date-fns/locale';
 import { getPosts } from '../constant/Fetch';
 
 export default function HomeScreen() {
+  const { isDarkTheme } = useContext(UserContext);
   const [posts, setPosts] = useState([]);
   const navigation = useNavigation();
   const locales = { tr, eu };
@@ -21,9 +23,9 @@ export default function HomeScreen() {
 
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDarkTheme ? styles.darkBackground : styles.lightBackground]}>
       <Animated.ScrollView>
-        <Text style={styles.headerText}>Son Gönderiler</Text>
+        <Text style={[styles.headerText, isDarkTheme ? null : styles.lightText]}>Son Gönderiler</Text>
         {posts.map((post) => (
           <TouchableOpacity
             key={post._id}
@@ -35,7 +37,7 @@ export default function HomeScreen() {
               </View>
               <View style={{ margin: 5 }}>
                 <Text style={styles.postTag}>{post.PostTags}</Text>
-                <Text style={styles.title}>{post.title}</Text>
+                <Text style={[styles.title, isDarkTheme ? null : styles.lightText]}>{post.title}</Text>
                 <View style={styles.postinfo}>
                   <TouchableOpacity onPress={() => {
                           navigation.navigate('UserProfile', { username: post.author.username });
@@ -49,7 +51,7 @@ export default function HomeScreen() {
                   </Text>
                 </View>
                 <View style={styles.postDownArea}>
-                  <Text style={styles.summary}>
+                  <Text style={[styles.summary, isDarkTheme ? null : styles.lightText]}>
                     <Text style={styles.firstLetter}>{post.summary.charAt(0)}</Text>
                     <Text>{post.summary.slice(1)}...</Text>
                   </Text>
@@ -65,8 +67,14 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  darkBackground: {
     backgroundColor: '#181a1e',
+  },
+  lightBackground: {
+    backgroundColor: '#f5f5f5',
+  },
+  lightText: {
+    color: '#000',
   },
   headerText: {
     color: '#fff',

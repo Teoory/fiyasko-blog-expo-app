@@ -1,9 +1,10 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { UserContext } from '../Hooks/UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);  // Giriş/Kayıt formunu kontrol eden state
+  const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -14,9 +15,8 @@ export default function AuthPage() {
     hasLowercase: false,
     hasNumber: false,
   });
-  const { setUserInfo } = useContext(UserContext);
+  const { setUserInfo, isDarkTheme } = useContext(UserContext);
 
-  // Şifre doğrulama fonksiyonu
   const validatePassword = (value) => {
     setPasswordValidations({
       minLength: value.length >= 8,
@@ -31,7 +31,6 @@ export default function AuthPage() {
     validatePassword(value);
   };
 
-  // Giriş yap fonksiyonu
   const login = async () => {
     try {
       const response = await fetch('https://fiyasko-blog-api.vercel.app/login', {
@@ -40,10 +39,15 @@ export default function AuthPage() {
         credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
+      
       if (response.ok) {
         const userInfo = await response.json();
+        
+        if (userInfo.token) {
+          await AsyncStorage.setItem('token', userInfo.token);
+        }
+  
         setUserInfo(userInfo);
-        Alert.alert('Başarılı', 'Giriş başarılı!');
       } else {
         Alert.alert('Hata', 'Hatalı kullanıcı adı veya şifre!');
       }
@@ -53,7 +57,6 @@ export default function AuthPage() {
     }
   };
 
-  // Kayıt ol fonksiyonu
   const register = async () => {
     if (password !== confirmPassword) {
       Alert.alert('Hata', 'Şifreler eşleşmiyor!');
@@ -72,7 +75,7 @@ export default function AuthPage() {
       });
       if (response.ok) {
         Alert.alert('Başarılı', 'Kayıt başarılı!');
-        setIsLogin(true);  // Başarılı kayıttan sonra giriş formuna döner
+        setIsLogin(true);
       } else {
         Alert.alert('Hata', 'Kayıt olurken bir hata oluştu!');
       }
@@ -83,10 +86,10 @@ export default function AuthPage() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDarkTheme ? styles.darkBackground : styles.lightBackground]}>
       {isLogin ? (
         <>
-          <Text style={styles.title}>Giriş Yap</Text>
+          <Text style={[styles.title, isDarkTheme ? null : styles.lightText]}>Giriş Yap</Text>
 
           <TextInput
             style={styles.input}
@@ -107,12 +110,12 @@ export default function AuthPage() {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => setIsLogin(false)} style={styles.link}>
-            <Text>Hesabın yok mu? <Text style={styles.linkText}>Yeni Hesap Oluştur</Text></Text>
+            <Text style={[{color:'#fff',}, isDarkTheme ? null : styles.lightText]}>Hesabın yok mu? <Text style={styles.linkText}>Yeni Hesap Oluştur</Text></Text>
           </TouchableOpacity>
         </>
       ) : (
         <>
-          <Text style={styles.title}>Kayıt Ol</Text>
+          <Text style={[styles.title, isDarkTheme ? null : styles.lightText]}>Kayıt Ol</Text>
 
           <TextInput
             style={styles.input}
@@ -136,10 +139,10 @@ export default function AuthPage() {
           />
           {password !== '' && (
             <View style={styles.passwordValidations}>
-              {!passwordValidations.minLength && <Text>Minimum 8 karakter olmalı</Text>}
-              {!passwordValidations.hasUppercase && <Text>Bir büyük harf içermeli</Text>}
-              {!passwordValidations.hasLowercase && <Text>Bir küçük harf içermeli</Text>}
-              {!passwordValidations.hasNumber && <Text>Bir numara içermeli</Text>}
+              {!passwordValidations.minLength && <Text style={styles.errorText}>Minimum 8 karakter olmalı</Text>}
+              {!passwordValidations.hasUppercase && <Text style={styles.errorText}>Bir büyük harf içermeli</Text>}
+              {!passwordValidations.hasLowercase && <Text style={styles.errorText}>Bir küçük harf içermeli</Text>}
+              {!passwordValidations.hasNumber && <Text style={styles.errorText}>Bir numara içermeli</Text>}
             </View>
           )}
           <TextInput
@@ -158,7 +161,7 @@ export default function AuthPage() {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => setIsLogin(true)} style={styles.link}>
-            <Text>Zaten bir hesabın var mı? <Text style={styles.linkText}>Giriş Yap</Text></Text>
+            <Text style={[{color:'#fff',}, isDarkTheme ? null : styles.lightText]}>Zaten bir hesabın var mı? <Text style={styles.linkText}>Giriş Yap</Text></Text>
           </TouchableOpacity>
         </>
       )}
@@ -167,6 +170,15 @@ export default function AuthPage() {
 };
 
 const styles = StyleSheet.create({
+  darkBackground: {
+    backgroundColor: '#181a1e',
+  },
+  lightBackground: {
+    backgroundColor: '#f5f5f5',
+  },
+  lightText: {
+    color: '#000',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -178,6 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
     fontWeight: 'bold',
+    color: '#fff',
   },
   input: {
     borderWidth: 1,

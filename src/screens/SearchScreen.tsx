@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, TextInput, Image, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
+import { UserContext } from '../Hooks/UserContext';
 import { useNavigation } from '@react-navigation/native';
 
 export default function SearchScreen() {
@@ -9,6 +10,7 @@ export default function SearchScreen() {
   const [minSearchResults, setMinSearchResults] = useState(0);
   const [maxSearchResults, setMaxSearchResults] = useState(10);
   const navigation = useNavigation();
+  const { isDarkTheme } = useContext(UserContext);
 
   const handleSearch = async (keyword: string) => {
     try {
@@ -45,7 +47,7 @@ export default function SearchScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDarkTheme ? styles.darkBackground : styles.lightBackground]}>
       <TextInput
         style={styles.searchBox}
         placeholder="Aramak istediğiniz kelimeyi yazın..."
@@ -75,7 +77,7 @@ export default function SearchScreen() {
         {/* Sayfa geçiş butonları */}
         {searchResults.length > 2 && (
           <View>
-            <Text style={styles.paginationInfo}>
+            <Text style={[styles.paginationInfo, isDarkTheme ? null : styles.lightText]}>
               Görüntülenen paylaşımlar: {minSearchResults + searchResults.length} / {maxSearchResults}
             </Text>
             <View style={styles.paginationButtons}>
@@ -110,20 +112,30 @@ export default function SearchScreen() {
 };
 
 const styles = StyleSheet.create({
+  darkBackground: {
+    backgroundColor: '#181a1e',
+  },
+  lightBackground: {
+    backgroundColor: '#f5f5f5',
+  },
+  lightText: {
+    color: '#000',
+  },
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#181a1e',
+    backgroundColor: '#f5f5f5',
+    paddingTop: 40,
   },
   searchBox: {
     height: 40,
     borderColor: '#ccc',
-    borderWidth: 1,
+    borderWidth: 3,
     borderRadius: 8,
     paddingLeft: 10,
     marginBottom: 20,
-    color: '#fff',
-    backgroundColor: '#333',
+    color: '#000',
+    backgroundColor: '#fff',
   },
   post: {
     flexDirection: 'row',
