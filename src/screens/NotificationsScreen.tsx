@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Alert, ActivityIndicator } from 'react-native';
 import { format } from 'date-fns';
 import { id, tr } from 'date-fns/locale';
 import { UserContext } from '../Hooks/UserContext';
@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 export default function NotificationsScreen() {
   const { userInfo, setUserInfo, isDarkTheme } = useContext(UserContext);
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function NotificationsScreen() {
         const response = await fetch(`https://fiyasko-blog-api.vercel.app/notifications/${userInfo.id}`);
         if (response.ok) {
           const data = await response.json();
+          setLoading(false);
           setNotifications(data);
         } else {
           console.error('Error fetching notifications.');
@@ -35,7 +37,6 @@ export default function NotificationsScreen() {
     fetchNotifications();
   }, [userInfo?.id]);
 
-  // Mark all notifications as read
   useEffect(() => {
     if (userInfo?.id) {
       const markAllAsRead = async () => {
@@ -66,6 +67,10 @@ export default function NotificationsScreen() {
       Alert.alert('Error', 'Failed to delete notification.');
     }
   };
+  
+  if (loading) {
+    return <ActivityIndicator size="large" color="orange" style={[{backgroundColor:'#f5f5f5', height:'100%'}, isDarkTheme ? styles.darkBackground : styles.lightBackground]} />;
+  }
 
   const renderNotification = ({ item }) => {
     return (

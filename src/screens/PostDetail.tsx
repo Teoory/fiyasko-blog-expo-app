@@ -27,7 +27,7 @@ export default function PostDetail() {
         const response = await axios.get(`https://fiyasko-blog-api.vercel.app/post/${id}`);
         setPostInfo(response.data);
       } catch (error) {
-        console.error('Error fetching post details:', error);
+        console.info('Error fetching post details:', error);
       } finally {
         setLoading(false);
       }
@@ -88,7 +88,7 @@ export default function PostDetail() {
         setHasSuperLiked(hasSuperLikedData.hasSuperLiked);
         setComments(commentsData);
       } catch (error) {
-        console.error('Error fetching likes and comments:', error);
+        console.info('Error fetching likes and comments:', error);
       }
     };
 
@@ -103,10 +103,10 @@ export default function PostDetail() {
         body: JSON.stringify({ senderId, receiverId, postId, type }),
       });
       if (!response.ok) {
-        console.error('Error sending notification');
+        console.info('Error sending notification');
       }
     } catch (error) {
-      console.error('Error sending notification:', error);
+      console.info('Error sending notification:', error);
     }
   };
 
@@ -144,7 +144,7 @@ export default function PostDetail() {
         await sendNotification(userInfo.id, postInfo.author._id, postInfo._id, 'Yorum');
       }
     } catch (error) {
-      console.error('Error adding comment:', error.message);
+      console.info('Error adding comment:', error.message);
     }
   };
 
@@ -173,7 +173,7 @@ export default function PostDetail() {
       setLikes(updatedData.likes);
       setIsLiked(updatedData.isLiked);
     } catch (error) {
-      console.error('Error toggling like:', error.message);
+      console.info('Error toggling like:', error.message);
     }
   };
 
@@ -202,7 +202,7 @@ export default function PostDetail() {
         setHasSuperLiked(updatedData.isSuperLiked);
 
       } catch (error) {
-        console.error('Error toggling superlike:', error.message);
+        console.info('Error toggling superlike:', error.message);
       }
   };
   
@@ -219,7 +219,7 @@ export default function PostDetail() {
   };
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
+    return <ActivityIndicator size="large" color="orange" style={[{backgroundColor:'#f5f5f5', height:'100%'}, isDarkTheme ? styles.darkBackground : styles.lightBackground]} />;
   }
 
   if (!postInfo) {

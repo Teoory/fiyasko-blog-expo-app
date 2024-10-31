@@ -147,7 +147,7 @@ function HomeStackNavigator() {
     >
       {/* Ana sayfa */}
       <Stack.Screen 
-        name="Anasayfa" 
+        name="AnasayfaStack" 
         component={HomeScreen} 
         options={({ navigation }) => ({
           headerTitle: () => (

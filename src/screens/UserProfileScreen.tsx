@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { UserContext } from '../Hooks/UserContext';
 import { useRoute } from '@react-navigation/native';
 
@@ -16,31 +16,53 @@ export default function UserProfileScreen() {
   //   console.log("Alınan parametreler:", route.params);
   // }, [route.params]);
 
+
+
   useEffect(() => {
-    fetch(`https://fiyasko-blog-api.vercel.app/profile/${username}`)
-      .then(response => response.json()) 
-      .then(data => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch(`https://fiyasko-blog-api.vercel.app/profile/${username}`);
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        const data = await response.json();
         setUserProfile(data);
         setBio(data.user.bio);
-      });
+      } catch (error) {
+        console.info("UserProfile fetch error:", error);
+      }
+    };
+  
+    fetchUserProfile();
   }, [username]);
-
-
+  
   useEffect(() => {
-    fetch('https://fiyasko-blog-api.vercel.app/profile', { credentials: 'include' })
-      .then(response => response.json())
-      .then(userInfo => {
-        setUserInfo(userInfo);
-      });
-    
-    fetch(`https://fiyasko-blog-api.vercel.app/profile/${username}/likedPosts`)
-      .then(response => response.json())
-      .then(data => {
-        setLikedPosts(data.likedPosts);
-      });
+    const fetchUserInfoAndLikedPosts = async () => {
+      try {
+        const userInfoResponse = await fetch('https://fiyasko-blog-api.vercel.app/mobileProfile', { credentials: 'include' });
+        if (userInfoResponse.ok) {
+          const userInfoData = await userInfoResponse.json();
+          setUserInfo(userInfoData);
+        } else {
+          console.info('User info fetch failed:', userInfoResponse.status);
+        }
+  
+        const likedPostsResponse = await fetch(`https://fiyasko-blog-api.vercel.app/profile/${username}/likedPosts`);
+        if (likedPostsResponse.ok) {
+          const likedPostsData = await likedPostsResponse.json();
+          setLikedPosts(likedPostsData.likedPosts);
+        } else {
+          console.info('Liked posts fetch failed:', likedPostsResponse.status);
+        }
+      } catch (error) {
+        console.info("Error fetching user info and liked posts:", error);
+      }
+    };
+  
+    fetchUserInfoAndLikedPosts();
   }, [username]);
 
-  if (!userProfile) return <Text>Yükleniyor...</Text>;
+  if (!userProfile) return <ActivityIndicator size="large" color="orange" style={[{backgroundColor:'#f5f5f5', height:'100%'}, isDarkTheme ? styles.darkBackground : styles.lightBackground]} />;
   if (!username) {
     return <Text>Kullanıcı adı bulunamadı</Text>;
   }
@@ -49,7 +71,7 @@ export default function UserProfileScreen() {
     <ScrollView style={[styles.container, isDarkTheme ? styles.darkBackground : styles.lightBackground]}>
       <View style={styles.profileHeader}>
         <Image source={{ uri: userProfile.user.profilePhoto }} style={styles.profilePhoto} />
-        <View style={{ marginLeft: 20, textAlign: 'center',}}>
+        <View style={{ marginLeft: 20, alignItems: 'center',}}>
           {userProfile.user.username == 'teory'
           ? <Text style={styles.usernameTeory}>{userProfile.user.username}</Text>
           : <Text style={styles.username}>{userProfile.user.username}</Text>
@@ -64,7 +86,6 @@ export default function UserProfileScreen() {
         </View>
       </View>
 
-      {/* Biyografi */}
       <View style={styles.bioArea}>
         <Text style={[styles.bioTitle, isDarkTheme ? null : styles.lightText]}>Biyografi</Text>
 
@@ -80,7 +101,6 @@ export default function UserProfileScreen() {
         )}
       </View>
 
-      {/* Kullanıcının Paylaşımları */}
       <View>
         <Text style={[styles.sectionTitle, isDarkTheme ? null : styles.lightText]}>{userProfile.user.username}'in Gönderileri:</Text>
         {userProfile.posts.length === 0 ? (
@@ -95,7 +115,6 @@ export default function UserProfileScreen() {
         )}
       </View>
 
-      {/* Beğenilen Gönderiler */}
       <View>
         <Text style={[styles.sectionTitle, isDarkTheme ? null : styles.lightText]}>{userProfile.user.username}'in Beğendiği Gönderiler:</Text>
         {likedPosts.length === 0 ? (
