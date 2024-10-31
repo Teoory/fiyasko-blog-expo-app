@@ -20,6 +20,10 @@ Total code lines: https://api.github.com/repos/Teoory/fiyasko-blog-react-native/
 <hr>
 
 # Son Değişiklikler:</br>
+### V1.2.3
+- Notifications Screen Added
+- Notifications Added
+
 ### V1.2.2
 - Profil photo upload
 - Darkmode fetch
