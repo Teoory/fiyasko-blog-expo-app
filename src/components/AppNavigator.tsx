@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
@@ -11,16 +11,130 @@ import SearchScreen from '../screens/SearchScreen';
 import AuthScreen from '../screens/AuthScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import NewPostScreen from '../screens/NewPostScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 
+import * as Notifications from 'expo-notifications';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { UserContext } from '../Hooks/UserContext';
 import { tr } from 'date-fns/locale';
+import { set } from 'date-fns';
 
 const Stack = createStackNavigator();
 const Tab = createMaterialBottomTabNavigator();
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+Notifications.setNotificationChannelAsync('default', {
+  name: 'Default Channel',
+  importance: Notifications.AndroidImportance.MAX,
+  sound: 'default',
+  vibrationPattern: [0, 250, 250, 250],
+  lightColor: '#FF231F7C',
+  enableLights: true,
+  enableVibrate: true,
+  showBadge: true,
+  
+});
+
 function HomeStackNavigator() {
-  const { isDarkTheme } = useContext(UserContext);
+  const { userInfo, isDarkTheme } = useContext(UserContext);
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
+  const [newNotify, setNewNotify] = useState(false);
+  const navigation = useNavigation();
+
+
+  useEffect(() => {
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      // Kullanıcı bildirime tıkladığında NotificationsScreen'e yönlendirin
+      navigation.navigate('NotificationsScreen');
+    });
+
+    return () => {
+      // Dinleyiciyi kaldırın
+      responseListener.remove();
+    };
+  }, []);
+
+  const resetNotificationStatus = async () => {
+    await AsyncStorage.removeItem('notificationSent');
+    setNewNotify(false);
+  };
+
+  useEffect(() => {
+    resetNotificationStatus();
+  }, []);
+
+  useEffect(() => {
+    const getInitialNotification = async () => {
+      const lastNotification = await Notifications.getLastNotificationResponseAsync();
+      if (lastNotification) {
+        // console.log('Initial Notification:', lastNotification);
+      }
+    };
+    getInitialNotification();
+
+    const subscription = Notifications.addNotificationReceivedListener(notification => {
+      // console.log('Received Notification:', notification);
+      setHasNewNotifications(true);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    const checkNewNotifications = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const notificationSent = await AsyncStorage.getItem('notificationSent');
+        if (!token || !userInfo || notificationSent === 'true' || newNotify == true) return;
+        
+        const userId = userInfo.id;
+
+        const response = await fetch(`https://fiyasko-blog-api.vercel.app/check-new-notifications?userId=${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        setHasNewNotifications(data.newNotificationExists);
+
+        if (data.newNotificationExists) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: 'Yeni bildirim! 📬',
+              body: 'Yeni bir bildiriminiz var. Hemen kontrol edin! ',
+              sound: 'default',
+              priority: Notifications.AndroidNotificationPriority.HIGH,
+              vibrate: [0, 250, 250, 250],
+              data: { screen: 'NotificationsScreen' },
+            },
+            trigger: null,
+          });
+          await AsyncStorage.setItem('notificationSent', 'true');
+          setNewNotify(true);
+        }
+      } catch (error) {
+        console.info('Error checking notifications:', error);
+      }
+    };
+
+    // Set an interval to check for notifications every 1 minute
+    const intervalId = setInterval(checkNewNotifications, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [userInfo]);
+  
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -44,8 +158,8 @@ function HomeStackNavigator() {
               />
           ),
           headerRight: () => (
-            <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
-              <Text style={styles.notificationButton}>🔔</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('NotificationsScreen')}>
+              <Text style={[styles.notificationButton, hasNewNotifications && styles.notificationAlert]}>🔔</Text>
             </TouchableOpacity>
           ),
         })}
@@ -71,8 +185,8 @@ function HomeStackNavigator() {
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
-              <Text style={styles.notificationButton}>🔔</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('NotificationsScreen')}>
+              <Text style={[styles.notificationButton, hasNewNotifications && styles.notificationAlert]}>🔔</Text>
             </TouchableOpacity>
           ),
         })}
@@ -99,8 +213,30 @@ function HomeStackNavigator() {
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
-              <Text style={styles.notificationButton}>🔔</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('NotificationsScreen')}>
+              <Text style={[styles.notificationButton, hasNewNotifications && styles.notificationAlert]}>🔔</Text>
+            </TouchableOpacity>
+          ),
+        })}
+      />
+
+      {/* NotificationsScreen */}
+      <Stack.Screen 
+        name="NotificationsScreen" 
+        component={NotificationsScreen} 
+        options={({ navigation }) => ({
+          headerTitle: () => (
+            <TouchableOpacity onPress={() => navigation.navigate('Anasayfa')}>
+              <Image 
+                source={require('../../assets/logo.png')}
+                style={{ width: 120, height: 60 }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          ),
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={[styles.backButton, isDarkTheme ? null : styles.lightText]}>←</Text>
             </TouchableOpacity>
           ),
         })}
@@ -248,6 +384,9 @@ const styles = StyleSheet.create({
     padding:3,
     paddingLeft:4,
     backgroundColor:'#fff',
+  },
+  notificationAlert: {
+    backgroundColor: 'red',
   },
   backButton: {
     color: '#fff', 

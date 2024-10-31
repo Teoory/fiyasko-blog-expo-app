@@ -35,49 +35,86 @@ export default function PostDetail() {
     fetchPost();
   }, [id]);
 
+  // useEffect(() => {
+  //   fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/likes`)
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       setLikes(data.likes);
+  //   });
+
+  //   fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/superlikes`)
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       setSuperLikes(data.superlikes);
+  //   });
+
+  //   fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/hasMobileLiked`,{
+  //     method: 'GET',
+  //     credentials: 'include',
+  //     })
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       setIsLiked(data.hasLiked);
+  //   });
+
+  //   fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/hasSuperLiked`,{
+  //     method: 'GET',
+  //     credentials: 'include',
+  //     })
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       setHasSuperLiked(data.hasSuperLiked);
+  //   });
+
+  //   fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/comments`)
+  //     .then(response => response.json())
+  //     .then(comments => setComments(comments))
+  // }, [id]);
+
   useEffect(() => {
-    fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/likes`)
-      .then(response => response.json())
-      .then(data => {
-        setLikes(data.likes);
-    });
+    const fetchLikesAndComments = async () => {
+      try {
+        const [likesData, superLikesData, hasLikedData, hasSuperLikedData, commentsData] = await Promise.all([
+          fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/likes`).then(res => res.json()),
+          fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/superlikes`).then(res => res.json()),
+          fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/hasMobileLiked`, { method: 'GET', credentials: 'include' }).then(res => res.json()),
+          fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/hasSuperLiked`, { method: 'GET', credentials: 'include' }).then(res => res.json()),
+          fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/comments`).then(res => res.json())
+        ]);
 
-    fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/superlikes`)
-      .then(response => response.json())
-      .then(data => {
-        setSuperLikes(data.superlikes);
-    });
+        setLikes(likesData.likes);
+        setSuperLikes(superLikesData.superlikes);
+        setIsLiked(hasLikedData.hasLiked);
+        setHasSuperLiked(hasSuperLikedData.hasSuperLiked);
+        setComments(commentsData);
+      } catch (error) {
+        console.error('Error fetching likes and comments:', error);
+      }
+    };
 
-    fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/hasMobileLiked`,{
-      method: 'GET',
-      credentials: 'include',
-      })
-      .then(response => response.json())
-      .then(data => {
-        setIsLiked(data.hasLiked);
-    });
-
-    fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/hasSuperLiked`,{
-      method: 'GET',
-      credentials: 'include',
-      })
-      .then(response => response.json())
-      .then(data => {
-        setHasSuperLiked(data.hasSuperLiked);
-    });
-
-    fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/comments`)
-      .then(response => response.json())
-      .then(comments => setComments(comments))
+    fetchLikesAndComments();
   }, [id]);
+
+  const sendNotification = async (senderId, receiverId, postId, type) => {
+    try {
+      const response = await fetch('https://fiyasko-blog-api.vercel.app/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senderId, receiverId, postId, type }),
+      });
+      if (!response.ok) {
+        console.error('Error sending notification');
+      }
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  };
 
   const addComment = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        throw new Error("Token yok!");
-      }
-  
+      if (!token) throw new Error("Token yok!");
+
       const response = await fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/mobilecomment`, {
         method: 'POST',
         headers: {
@@ -86,17 +123,26 @@ export default function PostDetail() {
         },
         body: JSON.stringify({ content: newComment }),
       });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const updatedComments = await fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/comments`)
-        .then(response => response.json());
-      
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      const updatedComments = await fetch(`https://fiyasko-blog-api.vercel.app/post/${id}/comments`).then(res => res.json());
       setComments(updatedComments);
       setNewComment('');
-  
+
+      const mentionedUsers = newComment.match(/@(\w+)/g);
+      if (mentionedUsers) {
+        await Promise.all(mentionedUsers.map(async username => {
+          const receiverUser = await fetch(`https://fiyasko-blog-api.vercel.app/profile/${username.slice(1)}`).then(res => res.json());
+          if (receiverUser && receiverUser.user._id !== userInfo.id) {
+            await sendNotification(userInfo.id, receiverUser.user._id, postInfo._id, 'Bahset');
+          }
+        }));
+      }
+
+      if (userInfo.id !== postInfo.author._id) {
+        await sendNotification(userInfo.id, postInfo.author._id, postInfo._id, 'Yorum');
+      }
     } catch (error) {
       console.error('Error adding comment:', error.message);
     }

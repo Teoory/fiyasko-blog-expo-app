@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginTop: 10,
+    color: '#fff',
   },
   usernameTeory: {
     fontSize: 22,
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
   tags: {
     textTransform:'uppercase',
     fontSize: 16,
-    color: '#444',
+    color: '#ddd999',
     marginTop: 5,
   },
   tagsAdmin: {

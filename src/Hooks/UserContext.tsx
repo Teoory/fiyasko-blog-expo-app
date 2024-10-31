@@ -41,10 +41,10 @@ export function UserContextProvider({ children }) {
         const data = await response.json();
         setUserInfo(data);
       } else {
-        console.error('Failed to fetch user data: Status', response.status);
+        console.info('Failed to fetch user data: Status', response.status);
       }
     } catch (error) {
-      console.error('Error fetching user info:', error);
+      console.info('Error fetching user info:', error);
     }
   };
 
