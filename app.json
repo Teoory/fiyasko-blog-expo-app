@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "fiyasko-blog-native",
+    "name": "KoFu Blog",
     "slug": "fiyasko-blog-native",
-    "version": "1.0.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,10 +18,16 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.kkslab.kofublog"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3f54141a-d34b-4754-a321-8d55553f8b41"
+      }
     }
   }
 }

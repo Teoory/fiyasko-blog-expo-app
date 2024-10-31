@@ -10,6 +10,7 @@ import UserOwnProfileScreen from '../screens/UserOwnProfileScreen';
 import SearchScreen from '../screens/SearchScreen';
 import AuthScreen from '../screens/AuthScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import NewPostScreen from '../screens/NewPostScreen';
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { UserContext } from '../Hooks/UserContext';
@@ -36,13 +37,11 @@ function HomeStackNavigator() {
         component={HomeScreen} 
         options={({ navigation }) => ({
           headerTitle: () => (
-            <TouchableOpacity onPress={() => navigation.navigate('Anasayfa')}>
               <Image 
                 source={require('../../assets/logo.png')}
                 style={{ width: 120, height: 60 }}
                 resizeMode="contain"
               />
-            </TouchableOpacity>
           ),
           headerRight: () => (
             <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
@@ -145,6 +144,19 @@ function BottomTabNavigator() {
           ),
         }}
       />
+
+      {userInfo && userInfo.tags.includes('admin') && (
+        <Tab.Screen 
+          name="newPost" 
+          component={NewPostScreen}
+          options={{
+            tabBarLabel: 'Paylaş',
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="plus-circle" color={color} size={24} />
+            ),
+          }}
+        />
+      )}
 
         <Tab.Screen 
           name="Ayarlar" 

@@ -46,6 +46,10 @@ export default function SearchScreen() {
     }
   };
 
+  useEffect(() => {
+    performRandomSearch();
+  }, []);
+
   return (
     <View style={[styles.container, isDarkTheme ? styles.darkBackground : styles.lightBackground]}>
       <TextInput

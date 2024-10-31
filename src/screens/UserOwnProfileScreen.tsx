@@ -1,13 +1,16 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { UserContext } from '../Hooks/UserContext';
 import { useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function UserOwnProfileScreen() {
   const route = useRoute();
   const { userInfo, setUserInfo, isDarkTheme } = useContext(UserContext);
   const { username } = userInfo;
   const [userProfile, setUserProfile] = useState(null);
+  const [files, setFiles] = useState('');
   const [bio, setBio] = useState('');
   const [editableBio, setEditableBio] = useState(false);
   const [likedPosts, setLikedPosts] = useState([]);
@@ -36,6 +39,61 @@ export default function UserOwnProfileScreen() {
       });
   }, [username]);
 
+  const newProfilePhoto = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('İzin Gerekli', 'Fotoğraf galerisine erişmek için izin vermeniz gerekiyor.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const selectedImage = result.assets[0];
+      const formData = new FormData();
+      formData.append('file', {
+        uri: selectedImage.uri,
+        name: 'profile.jpg',
+        type: 'image/jpeg',
+      });
+
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) {
+          throw new Error("Token yok!");
+        }
+        
+        const uploadResponse = await fetch('https://fiyasko-blog-api.vercel.app/mobileProfilePhoto', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        });
+
+        if (uploadResponse.ok) {
+          Alert.alert('Başarılı', 'Profil fotoğrafı başarıyla güncellendi.');
+          const updatedProfile = await uploadResponse.json();
+          setUserProfile({ ...userProfile, user: { ...userProfile.user, profilePhoto: updatedProfile.profilePhoto } });
+          setUserInfo({ ...userInfo, profilePhoto: updatedProfile.profilePhoto });
+        } else {
+          Alert.alert('Hata', 'Profil fotoğrafı güncellenemedi.');
+        }
+      } catch (error) {
+        console.error('Fotoğraf yüklenirken hata oluştu:', error);
+        Alert.alert('Hata', 'Fotoğraf yüklenirken bir hata oluştu.');
+      }
+    }
+  };
+
+
   if (!userProfile) return <Text>Yükleniyor...</Text>;
   if (!username) {
     return <Text>Kullanıcı adı bulunamadı</Text>;
@@ -44,7 +102,9 @@ export default function UserOwnProfileScreen() {
   return (
     <ScrollView style={[styles.container, isDarkTheme ? styles.darkBackground : styles.lightBackground]}>
       <View style={styles.profileHeader}>
-        <Image source={{ uri: userProfile.user.profilePhoto }} style={styles.profilePhoto} />
+        <TouchableOpacity onPress={newProfilePhoto}>
+          <Image source={{ uri: userProfile.user.profilePhoto }} style={styles.profilePhoto} />
+        </TouchableOpacity>
         <View style={{ marginLeft: 20, textAlign: 'center',}}>
           {userProfile.user.username == 'teory'
           ? <Text style={styles.usernameTeory}>{userProfile.user.username}</Text>
@@ -65,12 +125,15 @@ export default function UserOwnProfileScreen() {
         <Text style={[styles.bioTitle, isDarkTheme ? null : styles.lightText]}>Biyografi</Text>
 
         {editableBio ? (
+          <>
           <TextInput
             style={styles.bioInput}
             value={bio}
             onChangeText={setBio}
             multiline
           />
+          </>
+          
         ) : (
           <Text style={styles.bioText}>{bio || 'Henüz biyografi eklenmemiş.'}</Text>
         )}
@@ -143,6 +206,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginTop: 10,
+    color: '#fff',
   },
   usernameTeory: {
     fontSize: 22,
@@ -157,7 +221,7 @@ const styles = StyleSheet.create({
   tags: {
     textTransform:'uppercase',
     fontSize: 16,
-    color: '#444',
+    color: '#ddd999',
     marginTop: 5,
   },
   tagsAdmin: {
