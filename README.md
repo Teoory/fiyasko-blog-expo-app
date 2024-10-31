@@ -20,6 +20,15 @@ Total code lines: https://api.github.com/repos/Teoory/fiyasko-blog-react-native/
 <hr>
 
 # Son Değişiklikler:</br>
+### V1.2.1
+- New Domain and Url (Kofu.com.tr)
+- Dark mode
+- Logout Function
+- Like and Ghost Like Function
+- Add Comment Fix
+- Logo Update
+- New Domain and Url
+
 ### V1.1.1
 - HomeScreen ve PostScreen oluşturuldu.
   - Henüz yorumlar, beğeniler ve okunma sayısı gibi özellikler gösterilmiyor. Yalnızca gönderiler gösteriliyor
